@@ -14,6 +14,13 @@ use Modules\Landing\Http\Controllers\LandingController;
  *
 */
 
-Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
-    Route::apiResource('landing', LandingController::class)->names('landing');
+Route::prefix('v1')->group(function () {
+    Route::controller(LandingController::class)->name('landing.')->prefix('landing')->group(function () {
+
+        Route::get('/', 'index')->name('index');
+
+        Route::get('ecommerce', 'ecommerce')->name('ecommerce');
+
+        Route::get('search', 'search')->name('search');
+    });
 });

@@ -14,6 +14,6 @@ use Modules\Landing\Http\Controllers\LandingController;
 |
 */
 
-Route::group([], function () {
-    Route::resource('landing', LandingController::class)->names('landing');
-});
+// Route::group([], function () {
+//     Route::resource('landing', LandingController::class)->names('landing');
+// });

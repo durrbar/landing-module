@@ -3,63 +3,71 @@
 namespace Modules\Landing\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Modules\Blog\Models\Post;
+use Modules\Landing\Resources\PostResource;
+use Modules\Ecommerce\Models\Product;
+use Modules\Landing\Resources\ProductResource;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class LandingController extends Controller
 {
+    protected const CACHE_LATEST_POSTS = 'api.v1.posts.latest';
+    private const CACHE_FEATURED_PRODUCTS = 'api.v1.products.featured';
+    private const CACHE_PUBLIC_PRODUCTS = 'public_products_';
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view('landing::index');
+        $cacheDuration = now()->addMinutes(config('cache.duration'));
+        $latest = Cache::remember(self::CACHE_LATEST_POSTS, $cacheDuration, function () {
+            return Post::select('id', 'slug', 'title', 'author_id', 'created_at')
+                ->with(['author:id,first_name,last_name,name,avatar,avatar_url', 'cover'])
+                ->latest()
+                ->paginate(5); // Use pagination
+        });
+
+        $featured = Cache::remember(self::CACHE_FEATURED_PRODUCTS, $cacheDuration, function () {
+            return Product::with('cover')->paginate(6); // Use pagination
+        });
+
+        return response()->json([
+            'latest' => PostResource::collection($latest),
+            'featureds' => ProductResource::collection($featured),
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function ecommerce()
     {
-        return view('landing::create');
-    }
+        $cacheKey = self::CACHE_PUBLIC_PRODUCTS;
+        $cacheDuration = now()->addMinutes(config('cache.duration'));
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $products = Cache::remember($cacheKey, $cacheDuration, function () {
+            return QueryBuilder::for(Product::query())
+                ->allowedFields([
+                    'id',
+                    'slug',
+                    'title',
+                    'duration',
+                    'author_id',
+                    'created_at',
+                    'total_views',
+                    'total_shares'
+                ])
+                ->with('cover')
+                ->withCount('reviews')
+                ->withAvg('reviews', 'rating')
+                ->where('publish', 'published')
+                ->limit(10)
+                ->get(); // Convert to array to prevent serialization issues
+        });
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('landing::show');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('landing::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        //
+        return response()->json(ProductResource::collection($products)); // No need for ProductResource, pagination formats it already
     }
 }
