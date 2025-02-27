@@ -1,0 +1,33 @@
+{
+    "name": "durrbar/landing-module",
+    "type": "laravel-module",
+    "description": "",
+    "authors": [
+        {
+            "name": "Kid Max",
+            "email": "kidmax285@gmail.com"
+        }
+    ],
+    "homepage": "https://github.com/durrbar/landing-module",
+    "license": "MIT",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Landing\\": "app/",
+            "Modules\\Landing\\Database\\Factories\\": "database/factories/",
+            "Modules\\Landing\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Landing\\Tests\\": "tests/"
+        }
+    }
+}
